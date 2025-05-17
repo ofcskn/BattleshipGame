@@ -2,6 +2,8 @@
 
 import tkinter as tk
 from game import Ship, Board
+from protocol.commands import CLIENT_COMMAND_PING
+from protocol.protocol_message import ProtocolMessage
 
 # CELL WINDOW SIZE 
 CELL_SIZE = 50
@@ -9,8 +11,9 @@ CELL_SIZE = 50
 BOARD_SIZE = 10
 
 class BattleshipUI:
-    def __init__(self, master):
+    def __init__(self, master, client):
         self.master = master
+        self.client = client
         self.board = Board(size=BOARD_SIZE)
         self.canvas = tk.Canvas(master, width=(BOARD_SIZE + 1)*CELL_SIZE, height=(BOARD_SIZE +1)*CELL_SIZE, bg="lightblue")
         self.canvas.pack()
@@ -172,3 +175,7 @@ class BattleshipUI:
         else:
             self.selected_ship = None
             self.info_label.config(text="All ships are located!")
+
+            # send the information to the socket
+            message = ProtocolMessage(CLIENT_COMMAND_PING, {"success": True})
+            self.client.send(message)
