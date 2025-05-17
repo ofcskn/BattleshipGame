@@ -1,9 +1,8 @@
-# ui.py
-
 import tkinter as tk
 from game import Ship, Board
-from protocol.commands import CLIENT_COMMAND_PING
+from protocol.commands import CLIENT_COMMAND_FIND_OPPONENT, CLIENT_COMMAND_PING, SERVER_COMMAND_FOUND_OPPONENT
 from protocol.protocol_message import ProtocolMessage
+import time
 
 # CELL WINDOW SIZE 
 CELL_SIZE = 50
@@ -176,6 +175,24 @@ class BattleshipUI:
             self.selected_ship = None
             self.info_label.config(text="All ships are located!")
 
-            # send the information to the socket
-            message = ProtocolMessage(CLIENT_COMMAND_PING, {"success": True})
-            self.client.send(message)
+            self.search_for_match()
+
+    def search_for_match(self, timeout=30):
+        self.client.match_found_event.clear()  # Reset event before waiting
+
+        message = ProtocolMessage(CLIENT_COMMAND_FIND_OPPONENT, {"isMatching": True, "inGame": False})
+        self.client.send(message)
+
+        print("⏳ Searching for opponent...")
+        found = self.client.match_found_event.wait(timeout=timeout)
+
+        if found:
+            opponent_info = self.client.match_payload
+            print(f"✅ Opponent found: {opponent_info['opponentAddress']}")
+            
+            attack_board = Board()
+
+            return True
+        else:
+            print("❌ Timeout: No opponent found after 30 seconds.")
+            return False

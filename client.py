@@ -1,20 +1,16 @@
 import socket
 import threading
 from constants import HOST, PORT
+from protocol.commands import SERVER_COMMAND_FOUND_OPPONENT, SERVER_COMMAND_NOT_MATCHED
 from protocol.protocol_message import ProtocolMessage
 
 class GameClient:
     def __init__(self):
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conn.connect((HOST, PORT))
-        self.username = None
         self.listening = False
-
-    def set_user(self, username):
-        self.username = username
-
-    def get_user(self):
-        return self.username
+        self.match_found_event = threading.Event()
+        self.match_payload = None  # To store matched opponent info
 
     def send(self, message: ProtocolMessage):
         self.conn.sendall(message.encode())
@@ -29,7 +25,15 @@ class GameClient:
                         print("Server disconnected.")
                         break
                     message = ProtocolMessage.decode(response)
-                    print(f"[Server] {message.command}: {message.payload}")
+                    # Handle commands from the server
+                    command = message.command
+                    if command == SERVER_COMMAND_FOUND_OPPONENT:
+                        print("Opponent found!", message.payload)
+                        self.match_payload = message.payload
+                        self.match_found_event.set()
+                    elif command == SERVER_COMMAND_NOT_MATCHED:
+                        self.match_found_event.clear()
+                        print("The opponent is not found.")
                 except Exception as e:
                     print(f"Error while listening to server: {e}")
                     break

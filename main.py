@@ -10,11 +10,8 @@ def main():
     client = GameClient()
     client.handle_client()
 
-    app = BattleshipUI(root, client)
+    BattleshipUI(root, client)
     root.mainloop()
-
-    input("Press Enter to exit...\n")
-    client.stop_listening()
 
 if __name__ == "__main__":
     main()
