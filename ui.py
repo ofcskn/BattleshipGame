@@ -14,7 +14,7 @@ class BattleshipUI:
         self.master = master
         self.client = client
         self.board = Board(size=BOARD_SIZE)
-        self.canvas = tk.Canvas(master, width=(BOARD_SIZE + 1)*CELL_SIZE, height=(BOARD_SIZE +1)*CELL_SIZE, bg="lightblue")
+        self.canvas = tk.Canvas(master, width=(BOARD_SIZE)*CELL_SIZE, height=(BOARD_SIZE)*CELL_SIZE, bg="lightblue")
         self.canvas.pack()
 
         self.info_label2 = tk.Label(master, text=f"Location mode {self.client.addr}", font=("Arial", 14))
@@ -83,16 +83,15 @@ class BattleshipUI:
         if self.board.gameMode == "1":
             self.clear_preview()
 
-            if x == 0 or y == 0:
-                self.drag_start = None
-                return
+            # if x == 0 or y == 0:
+            #     self.drag_start = None
+            #     return
 
-            row, col = x - 1, y - 1
-            self.drag_start = (row, col)
+            self.drag_start = (x, y)
             self.did_drag = False  # Track if the user dragged or not
 
             if self.selected_ship and self.selected_ship.size == 1:
-                self.selected_ship.set_position(row, col, "horizontal")
+                self.selected_ship.set_position(x, y, "horizontal")
                 self.preview_coords = self.selected_ship.coords
                 self.show_preview()
         else:
@@ -100,13 +99,12 @@ class BattleshipUI:
                 self.info_label.config(text=f"Not your turn or already attacked")
                 return
 
-            if 0 < x <= BOARD_SIZE and 0 < y <= BOARD_SIZE:
+            if 0 <= x < BOARD_SIZE and 0 <= y < BOARD_SIZE:
                 message = ProtocolMessage(CLIENT_COMMAND_ATTACK_TURN, {"attack_x": x, "attack_y": y , "opponent_addr": self.client.opponent_addr})
                 send_json(self.client.conn, message)
             
                 if self.client.attacked_block_event:
                     result = self.board.attack(x, y, self.client)
-                    self.save_bombed_board()
                     self.draw_board()
                     if result == "hit":
                         self.info_label.config(text="🎯 Hit! Bomb again.")
@@ -165,10 +163,9 @@ class BattleshipUI:
         if self.board.gameMode == "1":
             self.canvas.delete("preview")
             for x, y in self.preview_coords:
-                print(x, y)
                 if 0 <= x < BOARD_SIZE and 0 <= y < BOARD_SIZE:
-                    x0 = (x + 1) * CELL_SIZE  
-                    y0 = (y + 1) * CELL_SIZE  
+                    x0 = x * CELL_SIZE  
+                    y0 = y * CELL_SIZE  
                     x1 = x0 + CELL_SIZE
                     y1 = y0 + CELL_SIZE
                     self.canvas.create_rectangle(x0, y0, x1, y1, outline="red", width=2, tags="preview")
@@ -181,29 +178,29 @@ class BattleshipUI:
         self.preview_coords = []
 
     def draw_grid(self):
-        for i in range(BOARD_SIZE + 1):
+        for i in range(BOARD_SIZE):
             x = i * CELL_SIZE
             y_start = 0
-            y_end = (BOARD_SIZE + 1) * CELL_SIZE
+            y_end = (BOARD_SIZE) * CELL_SIZE
             self.canvas.create_line(x, y_start, x, y_end)
 
             y = i * CELL_SIZE
             x_start = 0
-            x_end = (BOARD_SIZE + 1) * CELL_SIZE
+            x_end = (BOARD_SIZE) * CELL_SIZE
             self.canvas.create_line(x_start, y, x_end, y)
 
-        # Draw column numbers 1-10 (skip 0th column)
-        for col in range(1, BOARD_SIZE + 1):
-            x = col * CELL_SIZE + CELL_SIZE / 2
-            y = CELL_SIZE / 2
-            self.canvas.create_text(x, y, text=str(col), font=("Arial", 14, "bold"))
+        # # Draw column numbers 1-10 (skip 0th column)
+        # for col in range(1, BOARD_SIZE + 1):
+        #     x = col * CELL_SIZE + CELL_SIZE / 2
+        #     y = CELL_SIZE / 2
+        #     self.canvas.create_text(x, y, text=str(col), font=("Arial", 14, "bold"))
 
-        # Draw row letters A-J (skip 0th row)
-        for row in range(1, BOARD_SIZE + 1):
-            x = CELL_SIZE / 2
-            y = row * CELL_SIZE + CELL_SIZE / 2
-            letter = chr(ord('A') + row - 1)
-            self.canvas.create_text(x, y, text=letter, font=("Arial", 14, "bold"))
+        # # Draw row letters A-J (skip 0th row)
+        # for row in range(1, BOARD_SIZE + 1):
+        #     x = CELL_SIZE / 2
+        #     y = row * CELL_SIZE + CELL_SIZE / 2
+        #     letter = chr(ord('A') + row - 1)
+        #     self.canvas.create_text(x, y, text=letter, font=("Arial", 14, "bold"))
 
     def draw_board(self):
         self.canvas.delete("all")
@@ -214,22 +211,23 @@ class BattleshipUI:
                 # Write column number headers
                 f.write("  " + "".join(str(i + 1) for i in range(BOARD_SIZE)) + "\n")
 
-                for y in range(BOARD_SIZE):
-                    line = chr(ord("A") + y) + " "  # Row label
-                    for x in range(BOARD_SIZE):
-                        val = self.board.grid[x][y]
+                for col in range(BOARD_SIZE):
+                    line = chr(ord("A") + col) + " "  # Row label
+                    for row in range(BOARD_SIZE):
+                        val = self.board.grid[row][col]
                         line += "-" if val == "~" else val
 
                         # Draw ship only if not empty
                         if val != "~":
-                            x0 = (x + 1) * CELL_SIZE
-                            y0 = (y + 1) * CELL_SIZE
+                            x0 = row  * CELL_SIZE
+                            y0 = col  * CELL_SIZE
                             x1 = x0 + CELL_SIZE
                             y1 = y0 + CELL_SIZE
                             self.canvas.create_rectangle(x0, y0, x1, y1, fill="gray", tags="ship")
                             self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text=val, fill="white", font=("Arial", 10), tags="ship")
 
                     f.write(line + "\n")
+
         elif self.board.gameMode == "2":
             with open(f"boards/daim-{self.client.addr}.txt", "w") as f:
                 f.write("  " + "".join(str(i + 1) for i in range(BOARD_SIZE)) + "\n")
@@ -253,16 +251,6 @@ class BattleshipUI:
                             self.canvas.create_rectangle(x0, y0, x1, y1, fill=fill, tags="attack")
                             self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text=val, fill="black", font=("Arial", 10), tags="attack")
                     f.write(line + "\n")
-
-    def save_bombed_board(self):
-        with open(f"boards/daim-{self.client.addr}.txt", "w") as f:
-            f.write("  " + "".join(str(i + 1) for i in range(BOARD_SIZE)) + "\n")
-            for x in range(BOARD_SIZE):
-                line = chr(ord("A") + x) + " "
-                for y in range(BOARD_SIZE):
-                    val = self.board.grid[x][y]
-                    line += "-" if val == "~" else val
-                f.write(line + "\n")
 
     def next_ship(self):
         if self.ship_queue:
