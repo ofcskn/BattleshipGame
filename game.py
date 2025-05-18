@@ -61,9 +61,7 @@ class Board:
                 if [x, y] == shipLocation:
                     self.grid[x][y] = "X"
                     client.turn = True
-                    client.increase_score()
                     return { "hit": True, "attacked_locations": self.attacked_locations }
         
         self.grid[x][y] = "O"
-        client.turn = False
         return { "hit": False, "attacked_locations": self.attacked_locations }

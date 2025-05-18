@@ -1,3 +1,4 @@
+import threading
 import tkinter as tk
 from client import GameClient
 from game import Ship, Board
@@ -48,8 +49,9 @@ class BattleshipUI:
         self.reset_button = tk.Button(master, text="Reset", command=self.reset_board)
         self.reset_button.pack()
 
-        self.match_again_button = tk.Button(master, text="Lets match", command=self.search_for_match)
-        self.match_again_button.pack()
+        self.find_match_button = tk.Button(master, text="Lets match", command=self.search_for_match)
+        self.find_match_button.pack()
+        self.find_match_button.config(state="disabled")
 
         self.next_ship()
 
@@ -75,7 +77,7 @@ class BattleshipUI:
         else:
             self.board.gameMode = "2"
             opponent_addr = self.client.opponent_addr
-            self.info_label.config(text=f"The attack mode is started. The attacker is {opponent_addr} The score is {self.client.get_score()}")
+            self.info_label.config(text=f"The attack mode is started. The attacker is {opponent_addr}")
             self.clear_preview()
             self.draw_board()
 
@@ -115,6 +117,7 @@ class BattleshipUI:
                     result = self.board.attack(x, y, self.client)
                     self.draw_board()
                     if result.get("hit") == True:
+                        self.score_label.config(text=f"The score is {self.client.increase_score()}")
                         message = ProtocolMessage(CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK, {"right": False, "opponent_addr": self.client.opponent_addr})
                         send_json(self.client.conn, message)
                         self.client.turn = True
@@ -269,30 +272,39 @@ class BattleshipUI:
         else:
             self.selected_ship = None
             self.info_label.config(text="All ships are located!")
-            self.search_for_match()
+            # Disable the button and start search in a thread
+            self.find_match_button.config(state="disabled")
+            threading.Thread(target=self.search_for_match, daemon=True).start()
 
     def search_for_match(self, timeout=30):
         # if the board is ready to match
         if self.ship_queue or self.board.gameMode != "1":
+            self.info_label.after(0, lambda: self.find_match_button.config(state="normal"))
             return 
-
-        self.client.match_found_event.clear()  # Reset event before waiting
-
+        
+        self.reset_button.config(state="disabled")
+        self.info_label.config(text=f"...sarching an opponent...")
         grouped_coords = [ship.coords for ship in self.board.ships]
         message = ProtocolMessage(CLIENT_COMMAND_FIND_OPPONENT, {"isMatching": True, "inGame": False, "ships": grouped_coords})
         send_json(self.client.conn, message)
 
         found = self.client.match_found_event.wait(timeout=timeout)
 
-        if found:
-            opponent_info = self.client.match_payload
-            print(f"✅ Opponent found: {opponent_info['opponent_addr']}")
-            print(f"✅ Opponent ships are: {opponent_info['opponent_ships']}")
-            
-            # lets change the game mode
-            self.reset_board("2")
+        def after_match():
+            if found:
+                opponent_info = self.client.match_payload
+                print(f"✅ Opponent found: {opponent_info['opponent_addr']}")
+                print(f"✅ Opponent ships are: {opponent_info['opponent_ships']}")
+                
+                # lets change the game mode
+                self.reset_board("2")
+                self.find_match_button.pack_forget()
 
-            return True
-        else:
-            print("❌ Timeout: No opponent found after 30 seconds.")
-            return False
+                return True
+            else:
+                print("❌ Timeout: No opponent found after 30 seconds.")
+                # Re-enable the match button
+                self.find_match_button.config(state="normal")
+
+        # Ensure GUI updates run on the main thread
+        self.info_label.after(0, after_match)
