@@ -1,6 +1,7 @@
 import tkinter as tk
+from client import GameClient
 from game import Ship, Board
-from protocol.commands import CLIENT_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT
+from protocol.commands import CLIENT_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT, CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK
 from protocol.protocol_message import ProtocolMessage
 from utils import send_json
 
@@ -10,7 +11,7 @@ CELL_SIZE = 50
 BOARD_SIZE = 10
 
 class BattleshipUI:
-    def __init__(self, master, client):
+    def __init__(self, master, client:GameClient):
         self.master = master
         self.client = client
         self.board = Board(size=BOARD_SIZE)
@@ -22,6 +23,9 @@ class BattleshipUI:
 
         self.info_label = tk.Label(master, text=f"Location mode {self.client.addr}", font=("Arial", 14))
         self.info_label.pack()
+
+        self.score_label = tk.Label(master, text=f"The score is {self.client.get_score()}", font=("Arial", 14))
+        self.score_label.pack()
 
         self.drag_start = None
         self.preview_coords = []
@@ -71,7 +75,7 @@ class BattleshipUI:
         else:
             self.board.gameMode = "2"
             opponent_addr = self.client.opponent_addr
-            self.info_label.config(text=f"The attack mode is started. The attacker is {opponent_addr}")
+            self.info_label.config(text=f"The attack mode is started. The attacker is {opponent_addr} The score is {self.client.get_score()}")
             self.clear_preview()
             self.draw_board()
 
@@ -100,18 +104,23 @@ class BattleshipUI:
                 return
 
             if 0 <= x < BOARD_SIZE and 0 <= y < BOARD_SIZE:
+                if (x, y) in self.board.attacked_locations:
+                    self.info_label.config(text="The location is attacked before.")
+                    return
+             
                 message = ProtocolMessage(CLIENT_COMMAND_ATTACK_TURN, {"attack_x": x, "attack_y": y , "opponent_addr": self.client.opponent_addr})
                 send_json(self.client.conn, message)
             
                 if self.client.attacked_block_event:
                     result = self.board.attack(x, y, self.client)
                     self.draw_board()
-                    if result == "hit":
+                    if result.get("hit") == True:
+                        message = ProtocolMessage(CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK, {"right": False, "opponent_addr": self.client.opponent_addr})
+                        send_json(self.client.conn, message)
+                        self.client.turn = True
                         self.info_label.config(text="🎯 Hit! Bomb again.")
-                        self.client.turn = True  # Allow another bomb
                     else:
                         self.info_label.config(text="💨 Missed! Opponent's turn.")
-                        self.client.turn = False
             else:
                 self.info_label.config(text=f"Wrong location to click!")
 

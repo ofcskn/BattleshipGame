@@ -32,7 +32,6 @@ class Board:
         self.grid = [["~"] * size for _ in range(size)]
         self.ships = []
         self.attacked_locations = set()  # Use a set for quick lookup
-        self.turn = True
         self.gameMode = gameMode
 
     def is_valid_position(self, ship):
@@ -53,16 +52,18 @@ class Board:
 
     def attack(self, x, y, client):
         if client.turn == False:
-            return "Not your turn"
+            return { "hit": False, "error": "noTurn", "attacked_locations": self.attacked_locations }
         if (x, y) in self.attacked_locations:
-            return "bombed before"
-
+            return { "hit": False, "error": "attackedBefore", "attacked_locations": self.attacked_locations }
         self.attacked_locations.add((x, y))
         for opponentShip in client.opponent_ships:
             for shipLocation in opponentShip:
                 if [x, y] == shipLocation:
                     self.grid[x][y] = "X"
-                    return "hit"
+                    client.turn = True
+                    client.increase_score()
+                    return { "hit": True, "attacked_locations": self.attacked_locations }
         
         self.grid[x][y] = "O"
-        return "miss"
+        client.turn = False
+        return { "hit": False, "attacked_locations": self.attacked_locations }

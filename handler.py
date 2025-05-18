@@ -1,12 +1,12 @@
 
-from protocol.commands import CLIENT_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT, SERVER_COMMAND_ATTACK_BLOCK, SERVER_COMMAND_FOUND_OPPONENT, SERVER_COMMAND_NOT_MATCHED, SERVER_COMMAND_OPPONENT_IS_ATTACKED_BLOCK
+from protocol.commands import CLIENT_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT, CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK, SERVER_COMMAND_ATTACK_BLOCK, SERVER_COMMAND_FOUND_OPPONENT, SERVER_COMMAND_NOT_MATCHED, SERVER_COMMAND_OPPONENT_IS_ATTACKED_BLOCK, SERVER_COMMAND_OPPONENT_RIGHT_TO_ATTACK, SERVER_COMMAND_RIGHT_TO_ATTACK
 from protocol.protocol_message import ProtocolMessage
 from utils import recv_json, send_json
 
 def handle_client(conn, addr, players, waiting_players):    
     with conn:
         print(f"[+] [NEW CONNECTION] {addr} connected.")
-        players[conn] = { "address": addr, "opponent_addr": None, "inGame": False, "isMatching": False, "ships": []}
+        players[conn] = { "address": addr, "opponent_addr": None, "inGame": False, "isMatching": False, "ships": [], "attackCoords": []}
 
         while True:
             try:
@@ -46,12 +46,15 @@ def handle_client(conn, addr, players, waiting_players):
                 elif command == CLIENT_COMMAND_ATTACK_TURN and players[conn]["opponent_addr"] != None:
                     attack_x = data.payload.get("attack_x")
                     attack_y = data.payload.get("attack_y")
+
+                    attackedCoords = players[conn]["attackCoords"]
+                    if [attack_x, attack_y] in attackedCoords:
+                        send_json(conn, ProtocolMessage(SERVER_COMMAND_RIGHT_TO_ATTACK, {"right": True}))
+
                     opponent_addr = tuple(data.payload.get("opponent_addr"))
 
                     opponent_conn = None
                     for connection, info in players.items():
-                        print(connection, info)
-                        print(info["address"])
                         if info["address"] == opponent_addr:
                             opponent_conn = connection
                             break
@@ -65,10 +68,21 @@ def handle_client(conn, addr, players, waiting_players):
                                 "opponent_addr": addr 
                             }
                         ))
+                        players[opponent_conn]["attackCoords"].append([attack_x, attack_y])
                     else:
                         print(f"Opponent address {opponent_addr} not found in players: {[info['address'] for info in players.values()]}")
-                    print("SERVER_COMMAND_ATTACK_BLOCK")
                     send_json(conn, ProtocolMessage(SERVER_COMMAND_ATTACK_BLOCK, {"attack_y": attack_y, "attack_x": attack_x, "opponent_addr": opponent_addr}))
+                    players[conn]["attackCoords"].append([attack_x, attack_y])
+                elif command == CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK:
+                    opponent_addr = tuple(data.payload.get("opponent_addr"))
+                    opponent_conn = None
+                    for connection, info in players.items():
+                        if info["address"] == opponent_addr:
+                            opponent_conn = connection
+                            break
+
+                    if opponent_conn:
+                        send_json(opponent_conn, ProtocolMessage(SERVER_COMMAND_OPPONENT_RIGHT_TO_ATTACK,{ "right": False }))
                 else:
                     message = ProtocolMessage(SERVER_COMMAND_NOT_MATCHED, {"address": addr})
                     send_json(conn, message)

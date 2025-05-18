@@ -1,8 +1,8 @@
 import socket
 import threading
 from constants import HOST, PORT
-from protocol.commands import SERVER_COMMAND_ATTACK_BLOCK, SERVER_COMMAND_FOUND_OPPONENT, SERVER_COMMAND_NOT_MATCHED, SERVER_COMMAND_OPPONENT_IS_ATTACKED_BLOCK
-from utils import recv_json
+from protocol.commands import SERVER_COMMAND_ATTACK_BLOCK, SERVER_COMMAND_FOUND_OPPONENT, SERVER_COMMAND_NOT_MATCHED, SERVER_COMMAND_OPPONENT_IS_ATTACKED_BLOCK, SERVER_COMMAND_OPPONENT_RIGHT_TO_ATTACK, SERVER_COMMAND_RIGHT_TO_ATTACK
+from utils import recv_json, send_json
 
 class GameClient:
     def __init__(self):
@@ -18,6 +18,14 @@ class GameClient:
         self.attacked_x = None
         self.attacked_y = None
         self.turn = True
+        self.score = 0 
+    
+    def increase_score(self):
+        self.score = self.score + 1
+        return self.score
+
+    def get_score(self):
+        return self.score 
 
     def handle_client(self):
         def listen():
@@ -51,6 +59,10 @@ class GameClient:
                         print(f"The attack location is {self.attacked_x}, {self.attacked_y}.")
                         self.attacked_block_event.set()
                         self.turn = True
+                    elif command == SERVER_COMMAND_RIGHT_TO_ATTACK:
+                        self.turn = message.payload.get("right")
+                    elif command == SERVER_COMMAND_OPPONENT_RIGHT_TO_ATTACK:
+                        self.turn = message.payload.get("right")
                     elif command == SERVER_COMMAND_NOT_MATCHED:
                         self.match_found_event.clear()
                         print("The opponent is not found.")
