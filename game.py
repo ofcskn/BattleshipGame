@@ -9,33 +9,60 @@ class Ship:
         # as a game rule, every ship can be located as horizontal or vertical (not cross)
         self.direction = 'horizontal'
 
-    def set_position(self, start_row, start_col, direction):
+    def set_position(self, start_x, start_y, direction):
         self.direction = direction
         self.coords = []
         for i in range(self.size):
-            if direction == 'horizontal':
-                self.coords.append((start_row, start_col + i))
+            if direction == 'vertical':
+                self.coords.append((start_x, start_y + i))
             else:
-                self.coords.append((start_row + i, start_col))
+                self.coords.append((start_x + i, start_y))
+    
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "size": self.size,
+            "direction": self.direction,
+            "coords": self.coords
+        }
 
 class Board:
-    def __init__(self, size=10):
+    def __init__(self, gameMode="1", size=10):
         self.size = size
         self.grid = [["~"] * size for _ in range(size)]
         self.ships = []
+        self.attacked_locations = set()  # Use a set for quick lookup
+        self.turn = True
+        self.gameMode = gameMode
 
     def is_valid_position(self, ship):
-        for row, col in ship.coords:
-            if row < 0 or col < 0 or row >= self.size or col >= self.size:
-                return False
-            if self.grid[row][col] != "~":
-                return False
-        return True
+        return all(
+            0 <= x < self.size and
+            0 <= y < self.size and
+            self.grid[x][y] == "~"
+            for x, y in ship.coords
+        )
 
     def place_ship(self, ship):
         if self.is_valid_position(ship):
-            for row, col in ship.coords:
-                self.grid[row][col] = ship.name
+            for x, y in ship.coords:
+                self.grid[x][y] = ship.name
             self.ships.append(ship)
             return True
         return False
+
+    def attack(self, x, y, client):
+        if client.turn == False:
+            return "Not your turn"
+        if (x, y) in self.attacked_locations:
+            return "bombed before"
+
+        self.attacked_locations.add((x, y))
+        for opponentShip in client.opponent_ships:
+            for shipLocation in opponentShip:
+                if [x, y] == shipLocation:
+                    self.grid[x][y] = "X"
+                    return "hit"
+        
+        self.grid[x][y] = "O"
+        return "miss"
