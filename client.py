@@ -1,7 +1,7 @@
 import socket
 import threading
 from constants import HOST, PORT
-from protocol.commands import SERVER_COMMAND_ATTACK_BLOCK, SERVER_COMMAND_FOUND_OPPONENT, SERVER_COMMAND_NOT_MATCHED, SERVER_COMMAND_OPPONENT_IS_ATTACKED_BLOCK, SERVER_COMMAND_OPPONENT_RIGHT_TO_ATTACK, SERVER_COMMAND_RIGHT_TO_ATTACK
+from protocol.commands import SERVER_COMMAND_ATTACK_BLOCK, SERVER_COMMAND_FOUND_OPPONENT, SERVER_COMMAND_LEFT_MATCH, SERVER_COMMAND_NOT_MATCHED, SERVER_COMMAND_OPPONENT_IS_ATTACKED_BLOCK, SERVER_COMMAND_OPPONENT_RIGHT_TO_ATTACK, SERVER_COMMAND_RIGHT_TO_ATTACK
 from utils import recv_json, send_json
 
 class GameClient:
@@ -19,6 +19,7 @@ class GameClient:
         self.attacked_y = None
         self.turn = True
         self.score = 0 
+        self.restart_event = threading.Event()
     
     def increase_score(self):
         self.score = self.score + 1
@@ -66,6 +67,9 @@ class GameClient:
                     elif command == SERVER_COMMAND_NOT_MATCHED:
                         self.match_found_event.clear()
                         print("The opponent is not found.")
+                    elif command == SERVER_COMMAND_LEFT_MATCH:
+                        print("The opponent left from the match.")
+                        self.restart_event.set()
                 except Exception as e:
                     print(f"Error while listening to server: {e}")
                     break

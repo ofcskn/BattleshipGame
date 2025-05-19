@@ -2,7 +2,7 @@ import threading
 import tkinter as tk
 from client import GameClient
 from game import Ship, Board
-from protocol.commands import CLIENT_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT, CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK
+from protocol.commands import CLIENT_COMMAND__CANCEL_FIND_OPPONENT, CLIENT_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT, CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK
 from protocol.protocol_message import ProtocolMessage
 from utils import send_json
 
@@ -302,6 +302,9 @@ class BattleshipUI:
 
                 return True
             else:
+                message = ProtocolMessage(CLIENT_COMMAND__CANCEL_FIND_OPPONENT)
+                send_json(self.client.conn, message)
+
                 print("❌ Timeout: No opponent found after 30 seconds.")
                 # Re-enable the match button
                 self.find_match_button.config(state="normal")
