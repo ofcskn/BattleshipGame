@@ -76,6 +76,25 @@ class TextBasedBattleship:
                         print("Invalid coordinates. Try again.")
                         continue
 
+                    # Validate linearity and contiguity (a1 a2 a4 or a1 b1 c2 is not correct)
+                    # Get rows and cols from coords 
+                    rows = [r for r, c in coords]
+                    cols = [c for r, c in coords]
+
+                    if not (all(r == rows[0] for r in rows) or all(c == cols[0] for c in cols)):
+                        print("Coordinates must be in a straight horizontal or vertical line.")
+                        continue
+
+                    if all(r == rows[0] for r in rows):  # Horizontal
+                        if sorted(cols) != list(range(min(cols), max(cols) + 1)):
+                            print("Columns are not contiguous.")
+                            continue
+                    elif all(c == cols[0] for c in cols):  # Vertical
+                        if sorted(rows) != list(range(min(rows), max(rows) + 1)):
+                            print("Rows are not contiguous.")
+                            continue
+
+                    return coords
                     # Place the ships to the file.
                     for r, c in coords:
                         self.ship_board[r][c] = ship_type
