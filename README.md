@@ -190,6 +190,10 @@ A two-player Battleship board game played with boards! Players place ships and f
 | D      | 2        | 2    |
 | E      | 3        | 1    |
 
+### Protocol
+
+[PROTOCOL DOCUMENT](/protocol/PROTOCOL.MD)
+
 ### How to Play
 
 1. **Run the server.py** in your terminal.
