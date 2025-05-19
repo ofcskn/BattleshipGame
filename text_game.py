@@ -1,7 +1,6 @@
 import os
 
-AIMS_FILENAME="aim.txt"
-SHIPS_FILENAME="ships.txt"
+from constants import AIMS_FILENAME, SHIPS_FILENAME
 
 class TextBasedBattleship:
     def __init__(self, username):
