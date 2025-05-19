@@ -2,7 +2,7 @@ import threading
 import tkinter as tk
 from client import GameClient
 from game import Ship, Board
-from protocol.commands import CLIENT_COMMAND__CANCEL_FIND_OPPONENT, CLIENT_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT, CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK
+from protocol.commands import CLIENT_COMMAND__CANCEL_FIND_OPPONENT, SERVER_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT, CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK
 from protocol.protocol_message import ProtocolMessage
 from utils import send_json
 
@@ -110,7 +110,7 @@ class BattleshipUI:
                     self.info_label.config(text="The location is attacked before.")
                     return
              
-                message = ProtocolMessage(CLIENT_COMMAND_ATTACK_TURN, {"attack_x": x, "attack_y": y , "opponent_addr": self.client.opponent_addr})
+                message = ProtocolMessage(SERVER_COMMAND_ATTACK_TURN, {"attack_x": x, "attack_y": y , "opponent_addr": self.client.opponent_addr})
                 send_json(self.client.conn, message)
             
                 if self.client.attacked_block_event:

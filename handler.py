@@ -1,5 +1,5 @@
 
-from protocol.commands import CLIENT_COMMAND__CANCEL_FIND_OPPONENT, CLIENT_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT, CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK, SERVER_COMMAND_ATTACK_BLOCK, SERVER_COMMAND_FOUND_OPPONENT, SERVER_COMMAND_LEFT_MATCH, SERVER_COMMAND_NOT_MATCHED, SERVER_COMMAND_OPPONENT_IS_ATTACKED_BLOCK, SERVER_COMMAND_OPPONENT_RIGHT_TO_ATTACK, SERVER_COMMAND_RIGHT_TO_ATTACK
+from protocol.commands import CLIENT_COMMAND__CANCEL_FIND_OPPONENT, SERVER_COMMAND_ATTACK_TURN, CLIENT_COMMAND_FIND_OPPONENT, CLIENT_COMMAND_OPPONENT_RIGHT_TO_ATTACK, SERVER_COMMAND_ATTACK_BLOCK, SERVER_COMMAND_FOUND_OPPONENT, SERVER_COMMAND_LEFT_MATCH, SERVER_COMMAND_NOT_MATCHED, SERVER_COMMAND_OPPONENT_IS_ATTACKED_BLOCK, SERVER_COMMAND_OPPONENT_RIGHT_TO_ATTACK, SERVER_COMMAND_RIGHT_TO_ATTACK
 from protocol.protocol_message import ProtocolMessage
 from utils import recv_json, send_json
 
@@ -43,7 +43,7 @@ def handle_client(conn, addr, players, waiting_players):
                         # No opponent yet, add to waiting list
                         waiting_players.append(conn)
                         print(f"{players[conn]['address']} is waiting for opponent...")
-                elif command == CLIENT_COMMAND_ATTACK_TURN and players[conn]["opponent_addr"] != None:
+                elif command == SERVER_COMMAND_ATTACK_TURN and players[conn]["opponent_addr"] != None:
                     attack_x = data.payload.get("attack_x")
                     attack_y = data.payload.get("attack_y")
 
