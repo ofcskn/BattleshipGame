@@ -36,11 +36,11 @@ class BattleshipUI:
         self.canvas.tag_raise("grid")  # grid lines on top
 
         self.ship_queue = [
-            ("A", 5),
-            ("K", 4),
-            ("M", 3), ("M", 3), 
-            ("D", 2),
-            ("T", 1), ("T", 1)
+            ("A", 5), 
+            ("B", 4),
+            ("C", 3), ("C", 3), 
+            ("D", 2), ("D", 2),
+            ("E", 1), ("E", 1), ("E", 1)
         ]
 
         self.draw_grid()
@@ -63,11 +63,11 @@ class BattleshipUI:
         self.board = Board(gameMode, size=BOARD_SIZE)
         if self.board.gameMode == "1":
             self.ship_queue = [
-                ("A", 5),
-                ("K", 4),
-                ("M", 3), ("M", 3), 
-                ("D", 2),
-                ("T", 1), ("T", 1)
+                ("A", 5), 
+                ("B", 4),
+                ("C", 3), ("C", 3), 
+                ("D", 2), ("D", 2),
+                ("E", 1), ("E", 1), ("E", 1)
             ]
             self.selected_ship = None
             self.info_label.config(text="The game is started.")
