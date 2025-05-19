@@ -94,7 +94,6 @@ class TextBasedBattleship:
                             print("Rows are not contiguous.")
                             continue
 
-                    return coords
                     # Place the ships to the file.
                     for r, c in coords:
                         self.ship_board[r][c] = ship_type
