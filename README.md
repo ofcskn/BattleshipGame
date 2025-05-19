@@ -242,7 +242,3 @@ For questions or support, feel free to contact:
 **Ömer Faruk COŞKUN**
 [info@ofcskn.com](mailto:info@ofcskn.com)
 [ofcskn.com](https://ofcskn.com)
-
-```
-
-```
