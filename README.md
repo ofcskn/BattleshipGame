@@ -162,6 +162,16 @@ A two-player Battleship board game played with boards! Players place ships and f
 
 ---
 
+## Screenshots
+
+Here are some screenshots of the application:
+
+![Empty Boards](assets/screenshots/boards.png)
+![Selected Ships on the Board](assets/screenshots/ships.png)
+![Attacks on the Board](assets/screenshots/attack.png)
+
+---
+
 ### Rules
 
 1. The game is played on a **10x10 grid board** (A-J rows, 1-10 columns) (not yet).
